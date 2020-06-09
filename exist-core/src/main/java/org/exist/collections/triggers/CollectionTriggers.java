@@ -46,7 +46,7 @@ public class CollectionTriggers implements CollectionTrigger {
     }
 
     public CollectionTriggers(DBBroker broker, Txn transaction, Collection collection, CollectionConfiguration config) throws TriggerException {
-        
+
         List<TriggerProxy<? extends CollectionTrigger>> colTriggers = null;
         if (config != null) {
             colTriggers = config.collectionTriggers();
@@ -152,4 +152,19 @@ public class CollectionTriggers implements CollectionTrigger {
             }
         }
     }
+
+    @Override
+    public void beforeInstallPackage(DBBroker broker, Txn txn, XmldbURI pkguri) throws TriggerException {
+        for (CollectionTrigger trigger : triggers) {
+            trigger.beforeInstallPackage(broker, txn, pkguri);
+        }
+    }
+
+    @Override
+    public void afterInstallPackage(DBBroker broker, Txn txn, XmldbURI pkguri) throws TriggerException {
+        for (CollectionTrigger trigger : triggers) {
+            trigger.afterInstallPackage(broker, txn, pkguri);
+        }
+    }
+
 }

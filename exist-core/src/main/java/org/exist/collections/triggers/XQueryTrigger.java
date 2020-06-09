@@ -731,7 +731,7 @@ public class XQueryTrigger extends SAXTrigger implements DocumentTrigger, Collec
 		} else {
             execute(true, broker, txn, beforeDeleteDocument, document.getURI(), null);
 	    }
-	}
+}
 
 	@Override
 	public void afterDeleteDocument(DBBroker broker, Txn txn, XmldbURI uri) throws TriggerException {
@@ -748,6 +748,14 @@ public class XQueryTrigger extends SAXTrigger implements DocumentTrigger, Collec
 
 	@Override
 	public void afterUpdateDocumentMetadata(DBBroker broker, Txn txn, DocumentImpl document) throws TriggerException {
+	}
+
+	@Override
+	public void beforeInstallPackage(DBBroker broker, Txn txn, XmldbURI pkguri) throws TriggerException {
+	}
+
+	@Override
+	public void afterInstallPackage(DBBroker broker, Txn txn, XmldbURI pkguri) throws TriggerException {
 	}
 
 	/*public String toString() {

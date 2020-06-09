@@ -26,7 +26,7 @@ import org.exist.EXistException;
 import org.exist.SystemProperties;
 import org.exist.collections.Collection;
 import org.exist.collections.IndexInfo;
-import org.exist.collections.triggers.TriggerException;
+import org.exist.collections.triggers.*;
 import org.exist.dom.QName;
 import org.exist.dom.memtree.*;
 import org.exist.dom.persistent.BinaryDocument;
@@ -352,6 +352,39 @@ public class Deployment {
             return Optional.empty();
         }
         try {
+            // determine targetCollection early
+            XmldbURI targetCollection = null;
+            if (userTarget != null) {
+                try {
+                    targetCollection = XmldbURI.create(userTarget);
+                } catch (final IllegalArgumentException e) {
+                    throw new PackageException("Bad collection URI: " + userTarget, e);
+                }
+            } else {
+                final Optional<ElementImpl> target = findElement(repoXML, TARGET_COLL_ELEMENT);
+                final Optional<String> targetPath = target.map(ElementImpl::getStringValue).filter(s -> !s.isEmpty());
+
+                if (targetPath.isPresent()) {
+                    // determine target collection
+                    try {
+                        targetCollection = XmldbURI.create(getTargetCollection(broker, targetPath.get()));
+                    } catch (final IllegalArgumentException e) {
+                        throw new PackageException("Bad collection URI for <target> element: " + targetPath.get(), e);
+                    }
+                } else {
+                    LOG.warn("EXPath Package '" + pkgName + "' does not contain a <target> in its repo.xml, no files will be deployed to /apps");
+                }
+            }
+
+            final Collection collection;
+            try {
+                collection = broker.getCollection(targetCollection);
+            } catch (PermissionDeniedException e) {
+                throw new PackageException("Could not locate target collection for '" + pkgName + "'", e);
+            }
+            final CollectionTrigger trigger = new CollectionTriggers(broker, transaction, collection);
+            trigger.beforeInstallPackage(broker, transaction, targetCollection);
+
             // if there's a <setup> element, run the query it points to
             final Optional<ElementImpl> setup = findElement(repoXML, SETUP_ELEMENT);
             final Optional<String> setupPath = setup.map(ElementImpl::getStringValue).filter(s -> !s.isEmpty());
@@ -361,28 +394,6 @@ public class Deployment {
                 return Optional.empty();
             } else {
                 // otherwise copy all child directories to the target collection
-                XmldbURI targetCollection = null;
-                if (userTarget != null) {
-                    try {
-                        targetCollection = XmldbURI.create(userTarget);
-                    } catch (final IllegalArgumentException e) {
-                        throw new PackageException("Bad collection URI: " + userTarget, e);
-                    }
-                } else {
-                    final Optional<ElementImpl> target = findElement(repoXML, TARGET_COLL_ELEMENT);
-                    final Optional<String> targetPath = target.map(ElementImpl::getStringValue).filter(s -> !s.isEmpty());
-
-                    if (targetPath.isPresent()) {
-                        // determine target collection
-                        try {
-                            targetCollection = XmldbURI.create(getTargetCollection(broker, targetPath.get()));
-                        } catch (final IllegalArgumentException e) {
-                            throw new PackageException("Bad collection URI for <target> element: " + targetPath.get(), e);
-                        }
-                    } else {
-                        LOG.warn("EXPath Package '" + pkgName + "' does not contain a <target> in its repo.xml, no files will be deployed to /apps");
-                    }
-                }
                 if (targetCollection == null) {
                     // no target means: package does not need to be deployed into database
                     // however, we need to preserve a copy for backup purposes
@@ -451,6 +462,8 @@ public class Deployment {
 
                 storeRepoXML(broker, transaction, repoXML, targetCollection, requestedPerms);
 
+                trigger.afterInstallPackage(broker, transaction, targetCollection);
+
                 // TODO: it should be safe to clean up the file system after a package
                 // has been deployed. Might be enabled after 2.0
                 //cleanup(pkgName, repo);
@@ -461,8 +474,11 @@ public class Deployment {
                 }
                 return Optional.ofNullable(targetCollection.getCollectionPath());
             }
+
         } catch (final XPathException e) {
             throw new PackageException("Error found while processing repo.xml: " + e.getMessage(), e);
+        } catch (final TriggerException e) {
+            throw new PackageException("Trigger exception while processing repo.xml: " + e.getMessage(), e);
         }
     }
 

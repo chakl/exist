@@ -60,4 +60,7 @@ public interface CollectionTrigger extends Trigger {
 
     public void beforeDeleteCollection(DBBroker broker, Txn txn, Collection collection) throws TriggerException;
     public void afterDeleteCollection(DBBroker broker, Txn txn, XmldbURI uri) throws TriggerException;
+
+    public void beforeInstallPackage(DBBroker broker, Txn txn, XmldbURI pkgInst) throws TriggerException;
+    public void afterInstallPackage(DBBroker broker, Txn txn,  XmldbURI pkgInst) throws TriggerException;
 }

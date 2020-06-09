@@ -45,6 +45,7 @@ public class TriggerEvents {
 	//2 bits (because of metadata?)
 	public static short COLLECTION 	= 0;
 	public static short DOCUMENT 	= 10;
+	public static short PACKAGE 	= 20;
 
 	// -1 (BEFORE) * 1 (CREATE) + 1 (COLLECTION) //TODO: bit it
 	public static short BEFORE_CREATE_COLLECTION 	= -1; 
@@ -68,7 +69,12 @@ public class TriggerEvents {
 	public static short AFTER_MOVE_DOCUMENT 	=  14;
 	public static short BEFORE_DELETE_DOCUMENT 	= -15;
 	public static short AFTER_DELETE_DOCUMENT 	=  15;
-	
+
+	public static short BEFORE_INSTALL_PACKAGE 	= -21;
+	public static short AFTER_INSTALL_PACKAGE 	=  21;
+	public static short BEFORE_REMOVE_PACKAGE 	= -25;
+	public static short AFTER_REMOVE_DOCUMENT 	=  25;
+
 	public enum EVENTS {
 		CREATE_COLLECTION,
 		UPDATE_COLLECTION,
@@ -80,7 +86,10 @@ public class TriggerEvents {
 		UPDATE_DOCUMENT,
 		COPY_DOCUMENT,
 		MOVE_DOCUMENT,
-		DELETE_DOCUMENT
+		DELETE_DOCUMENT,
+
+		INSTALL_PACKAGE,
+		REMOVE_PACKAGE
 	}
 
 	private final static String EVENTS_STRING []  = {
@@ -94,7 +103,10 @@ public class TriggerEvents {
 		"UPDATE-DOCUMENT",
 		"COPY-DOCUMENT",
 		"MOVE-DOCUMENT",
-		"DELETE-DOCUMENT"
+		"DELETE-DOCUMENT",
+
+		"INSTALL-PACKAGE",
+		"REMOVE-PACKAGE"
 	};
 
 	private final static EVENTS _EVENTS_ []  = {
@@ -108,7 +120,10 @@ public class TriggerEvents {
 		EVENTS.UPDATE_DOCUMENT,
 		EVENTS.COPY_DOCUMENT,
 		EVENTS.MOVE_DOCUMENT,
-		EVENTS.DELETE_DOCUMENT
+		EVENTS.DELETE_DOCUMENT,
+
+		EVENTS.INSTALL_PACKAGE,
+		EVENTS.REMOVE_PACKAGE
 	};
 
 	public static Set<EVENTS> convertFromString(String events) throws TriggerException {
